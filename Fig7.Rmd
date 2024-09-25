@@ -1,0 +1,153 @@
+---
+title: "Starship viz plot"
+author: "Lily Peck"
+date: "2024-09-20"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(gggenomes)
+```
+
+```{r starship viz plot, Fig 7a}
+## using the output files and Rscript from the starfish pipeline
+regionGenes = utils::read.table("./Data/fxyl13.region0003.genes.config", header = T, sep = '	')
+regionSeqs = utils::read.table("./Data/fxyl13.region0003.seqs.config", header = T, sep = '	')
+regionFeats = utils::read.table("./Data/fxyl13.region0003.feats.config", header = T, sep = '	')
+linkFeats = read_links("./Data/fxyl13.region0003.links.filt.tsv", format = 'blast')
+regionGC <- read_bed("./Data/fxyl13.region0003.gc.config")
+
+regionGenes <- regionGenes %>%
+  mutate(OG = case_when(feat_id == "Fxyl908_013057"|
+                          feat_id == "Fxyl563_016025"|
+                          feat_id == "Fxyl038_011545" ~ "up",
+                          feat_id == "Fxyl908_013056"|
+                          feat_id == "Fxyl563_016024"|
+                          feat_id == "Fxyl038_011544" ~ "up2",
+                          feat_id == "Fxyl908_002740"|
+                          feat_id == "Fxyl563_001940"|
+                          feat_id == "Fxyl038_011263" ~ "up3",
+                          feat_id == "Fxyl908_002755"|
+                          feat_id == "Fxyl563_001963"|
+                          feat_id == "Fxyl038_012415" ~ "OG0021706",
+                          feat_id == "Fxyl908_002750"|
+                          feat_id == "Fxyl908_14616"|
+                          feat_id == "Fxyl563_001956"|
+                          feat_id == "Fxyl563_015883"|
+                          feat_id == "Fxyl038_002132"|
+                          feat_id == "Fxyl038_010777" ~ "OG0012317",
+                        feat_id == "Fxyl908_006158"|
+                          feat_id == "Fxyl563_001962"|
+                          feat_id == "Fxyl563_010736"|
+                          feat_id == "Fxyl038_011657" ~ "OG0012990",
+                        feat_id == "Fxyl908_002751"|
+                          feat_id == "Fxyl563_001957"|
+                          feat_id == "Fxyl038_002131" ~ "OG0013218",
+                        feat_id == "Fxyl908_001196"|
+                          feat_id == "Fxyl908_002748"|
+                          feat_id == "Fxyl563_001325"|
+                          feat_id == "Fxyl563_001954"|
+                          feat_id == "Fxyl038_000033"|
+                          feat_id == "Fxyl038_002134" ~ "OG0013229",
+                        feat_id == "Fxyl908_002742"|
+                          feat_id == "Fxyl563_001943"|
+                          feat_id == "Fxyl038_002141" ~ "OG0013513",
+                        feat_id == "Fxyl908_002744"|
+                          feat_id == "Fxyl563_001949"|
+                          feat_id == "Fxyl038_002138" ~ "OG0014005",
+                        feat_id == "Fxyl908_002747"|
+                          feat_id == "Fxyl563_001953"|
+                          feat_id == "Fxyl038_002135" ~ "OG0014454",
+                        feat_id == "Fxyl908_002746"|
+                          feat_id == "Fxyl563_001952"|
+                          feat_id == "Fxyl038_002136" ~ "OG0014841",
+                        feat_id == "Fxyl908_002745"|
+                          feat_id == "Fxyl908_004853"|
+                          feat_id == "Fxyl563_001951"|
+                          feat_id == "Fxyl563_006204"|
+                          feat_id == "Fxyl038_002137"|
+                          feat_id == "Fxyl038_004367" ~ "OG0000341",
+                        feat_id == "Fxyl908_001195"|
+                          feat_id == "Fxyl908_002749"|
+                          feat_id == "Fxyl908_014293"|
+                          feat_id == "Fxyl563_001951"|
+                          feat_id == "Fxyl563_001955"|
+                          feat_id == "Fxyl563_008686"|
+                          feat_id == "Fxyl563_008687"|
+                          feat_id == "Fxyl038_000034"|
+                          feat_id == "Fxyl038_002133" ~ "OG0000659",
+                        feat_id == "Fxyl908_002743"|
+                          feat_id == "Fxyl563_001947"|
+                          feat_id == "Fxyl563_001948"|
+                          feat_id == "Fxyl038_002139" ~ "OG0002487",
+                        feat_id == "Fxyl908_002754"|
+                          feat_id == "Fxyl908_004783"|
+                          feat_id == "Fxyl908_004785"|
+                          feat_id == "Fxyl563_001961"|
+                          feat_id == "Fxyl563_002941"|
+                          feat_id == "Fxyl563_002943"|
+                          feat_id == "Fxyl563_008687"|
+                          feat_id == "Fxyl038_005664"|
+                          feat_id == "Fxyl038_005666"|
+                          feat_id == "Fxyl038_012416" ~ "OG0010102",
+                          ))
+
+widthFrac = max(regionSeqs$length) / 20000
+#heightFrac = nrow(regionSeqs) / 2 # for default cases
+heightFrac = nrow(regionSeqs) / 1.1 # for when OG ids are included as gene_name
+
+align <- gggenomes(genes = regionGenes, seqs = regionSeqs, feats = regionFeats, links = linkFeats) %>% add_feats(gc=regionGC) +
+  geom_link(offset = 0.04) +
+  geom_bin_label(size = 3, expand_x = -100000, nudge_left = 0.05) +
+  geom_feat(alpha=.6, linewidth=3, position="identity", color = "#ff0000") +
+  geom_seq(linewidth = 0.5) +
+  geom_gene(aes(fill=name), show.legend = T, shape = 3) + 
+  geom_wiggle(aes(z=score, group=seq_id), feats(gc), fill="lavenderblush4", offset=-.3, height=.38, bounds=c(.5,0.15,0.65)) +
+  scale_fill_manual("Gene tags", values = c("cap" = "#ff0000", "tyr" = "#ff0000", "d37" = "#92e9ff", "fre" = "#b17227", "plp" = "#fdb735", "nlr" = "#048dfb"), na.value = "cornsilk3") +
+  geom_gene_tag(aes(label=name), size = 2, nudge_y=0.1, check_overlap = FALSE)
+align
+# ggsave("fxyl13.region0003.png", plot = align, units = "in", height = heightFrac, width = widthFrac, limitsize = FALSE)
+# ggsave("fxyl13.region0003.svg", plot = align, units = "in", height = heightFrac, width = widthFrac, limitsize = FALSE)
+
+```
+
+
+```{r starship captain tree, Fig 7B}
+##### starship tyr tree
+tree <- read.tree("./Data/starship_tyr_bootstrap.treefile")
+## import strain data from BLAST hits
+nams <- read_delim("./Data/27 documents from fxyl13_tyr_navis18-hap6-blastp.csv", delim = ",")
+
+tree$tip.label <- gsub("'","",tree$tip.label)
+d <- data.frame(label = tree$tip.label)
+d <- d %>% mutate(label = gsub("'","",label))
+d2 <- d %>%
+  rename(Name = label) %>%
+  left_join(nams, by = "Name") %>%
+  mutate(Label = Description) %>%
+  mutate(Label = case_when(grepl("Fusarium falciforme", Description) ~ "Outgroup",
+                           grepl("Fusarium oxysporum", Description) ~ "FOSC",
+                           grepl("Clonostachys", Description) ~ "Outgroup",
+                           grepl("Fusarium nygamai", Description) ~ "FFC",
+                           grepl("Fusarium sp. DS 682", Description) ~ "Outgroup",
+                           grepl("Fusarium mundagurra", Description) ~ "Outgroup",
+                           grepl("phyllophilum", Description) ~ "FFC",
+                           grepl("Fusarium redolens", Description) ~ "Outgroup",
+                           grepl("Fusarium xylarioides", Description) ~ "Arabica"))
+pal <- c("#9C964A","#FDDDA0", "#F98400","lightgrey")
+
+tree %>%
+  ggtree() %<+% d2 +
+  geom_tiplab(offset = 0.005, size = 3) +
+  geom_nodelab(hjust = 1.5, size = 3) +
+  geom_tippoint(aes(color=Label), alpha=0.6,size=5, na.rm = TRUE) +
+  labs(title = "Contig 11") +
+  scale_color_manual(values = pal) +
+  xlim(0,0.3) +
+  theme(legend.position = "bottom",
+        legend.title = element_blank()) +
+  geom_treescale(y = -1)
+#ggsave("starship-tyr-tree.svg")
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

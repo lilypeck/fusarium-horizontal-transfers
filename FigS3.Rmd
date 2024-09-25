@@ -1,0 +1,47 @@
+---
+title: "Whole-genome similarity"
+author: "Lily Peck"
+date: "2024-09-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(pheatmap)
+library(tidyverse)
+```
+
+```{r import data and tidy}
+data <- read.table("./Data/Table_SummaryID_OFrun.txt",sep="\t",header = TRUE,row.names = 1)
+tidy.names <- c("F. anthophilum",  "F. fujikuroi", "F. graminearum", "Fo cubense TR4" ,   "Fo lycopersici4287",   "Fo cubense 109", "Fo coffea 509",
+"Fo vasinfectum 248", "Fo raphani 541", "Fo 47", "Fo pisi 221", "F. phyllophylum",  "F. proliferatum" , "F. solani", "F. verticillioides",   "Coffea659", "Arabica908", "Robusta925", "Arabica563", "Robusta254", "Robusta268", "Robusta277", "Coffea674", "Coffea676", "Coffea035", "Arabica038", "Coffea113", "RobustaL0394" )
+colnames(data) <- tidy.names
+rownames(data) <- tidy.names
+data <- data %>% rownames_to_column("RowNames")
+row.new.order <- c("Robusta925",  "Robusta254", "Robusta268","Robusta277","RobustaL0394", "Coffea659", "Coffea676", "Coffea674", "Coffea035", "Coffea113","Arabica908","Arabica563","Arabica038", "F. phyllophylum","F. verticillioides","F. anthophilum","F. fujikuroi","F. proliferatum", "Fo cubense 109", "Fo coffea 509","Fo cubense TR4","Fo lycopersici4287","Fo vasinfectum 248", "Fo raphani 541", "Fo 47", "Fo pisi 221", "F. graminearum", "F. solani")
+data2 <- data %>% 
+  relocate(any_of(c("RowNames","Robusta925",  "Robusta254", "Robusta268","Robusta277","RobustaL0394", "Coffea659", "Coffea676", "Coffea674", "Coffea035", "Coffea113","Arabica908","Arabica563","Arabica038", "F. phyllophylum","F. verticillioides","F. anthophilum","F. fujikuroi","F. proliferatum", "Fo cubense 109", "Fo coffea 509","Fo cubense TR4","Fo lycopersici4287","Fo vasinfectum 248", "Fo raphani 541", "Fo 47", "Fo pisi 221"))) %>%
+  slice(match(row.new.order, RowNames)) 
+#data2 <- data2[, row.new.order]
+row.names(data2) <- data2$RowNames
+data2 <- data2 %>%
+  select(-c("F. graminearum", "F. solani",RowNames))
+data2 <- data2[!(row.names(data2) %in% c("F. graminearum","F. solani")),]
+```
+
+
+```{r plot}
+my_colour = c("#142a32","#1f3f4c","#295465","#33697e","#3e7e98","#4893b1","#5fa3bd","#79b1cd","#92c0d2", "#abcfdc")  
+plot <- pheatmap::pheatmap(mat = data2, 
+         color = my_colour,
+         cluster_cols = F,
+         cluster_rows = F,
+         cutree_cols = 3,
+         cutree_rows = 3,
+         treeheight_row = 0,
+         #cellwidth = 20, cellheight = 20, scale="none",
+         fontsize = 15,
+         na_col="white",
+         border_color ="white")
+plot
+```
+

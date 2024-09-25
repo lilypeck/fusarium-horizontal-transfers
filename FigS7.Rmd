@@ -1,0 +1,61 @@
+---
+title: "Fo lycopersici supercontig 51"
+author: "Lily Peck"
+date: "2024-09-20"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(ggtree)
+library(tidyverse)
+library(treeio)
+```
+
+
+```{r species tree}
+species.tree <- read.tree("./Data/Species_tree.treefile")
+
+groups<-read.csv("/Users/lilypeck/Library/CloudStorage/OneDrive-ImperialCollegeLondon/Genomics/7_flye.LR/densitree/species.tree.tip.labelgroup", sep="\t",header = 1)
+
+pal <- c("#74A089", "#F5CDB4", "#F8AFA8", "#9C964A", "#F98400","#FDDDA0")
+
+g <- species.tree %>%
+  ggtree(color="#000000") %<+% groups +
+  geom_tiplab(aes(label=paste0('italic(', genus, ')~italic(', species, ')~', strain)), parse=T, size = 4, offset = .02, align = T) +
+  geom_nodelab(hjust = 1.5, size = 3) +
+  geom_tippoint(aes(x = x+.02, color=group),size=5, na.rm = TRUE) +
+  scale_color_manual(values = pal,
+                     #labels = c("Absent", "Intact"),
+                     breaks = c("Robusta", "Coffea1","Coffea2","Arabica","FOSC","FFC"),
+                                name = "") +
+  theme(legend.position = "bottom",
+        legend.text = element_text(size = 15),
+        panel.background = element_rect(fill='transparent'), #transparent panel bg
+        plot.background = element_rect(fill='transparent', color=NA)) +
+  geom_treescale(offset = -1) +
+  xlim(0,1)
+g
+```
+
+```{r heatmap}
+hits<-read.csv("./Data/Rob254.s709.genes_all.cds.blast.csv", sep=",",header = F)
+hits <- hits[c(2:nrow(hits)),]
+colnames(hits) <- hits[1,]
+hits <- hits[2:nrow(hits),]
+rownames(hits)<-hits$Gene
+hits <- hits %>% 
+  dplyr::select(!new.label) %>% 
+  dplyr::select(!Gene) 
+
+gheatmap(g,hits, offset = 0.3, width=2,
+         colnames_position="bottom", 
+         colnames_angle=-45, colnames_offset_y = -1.5, colnames_offset_x = .04,
+         hjust=.5, font.size=3) +
+  scale_fill_viridis_d(option = "inferno", direction = -1,
+                       labels = c("Absent","Present")) +
+  theme(legend.position = "bottom",
+        legend.title = element_blank()) +
+  scale_y_continuous(expand=c(0, 3))
+ggsave("FigS7.tiff")
+```
+

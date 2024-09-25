@@ -1,0 +1,41 @@
+---
+title: "HTR 1 trees"
+author: "Lily Peck"
+date: "2024-09-19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(ggtree)
+library(tidyverse)
+```
+
+```{r HTR 1 tree1, Fig S8B}
+tree1 <- read.tree("./data/OG0017326_tree.txt")
+## highly similar genes are present in Fxyl and Foxy 95% similar
+## there is also a copy in F. solani which is 25% similar
+## dropping the F. solani tree tip so that the phylogenetic relationships can be seen
+tree1 <- drop.tip(tree1, "'KAH7229954.1'")
+d <- data.frame(label = tree1$tip.label)
+d$group <- c("FOSC","FOSC","FOSC","FOSC", "Arabica", "Arabica", "Arabica", "FOSC")
+pal <- c("#9C964A", "#F98400")
+ggtree(tree1) %<+% d +
+  geom_tippoint(aes(color=group),size=5, na.rm = TRUE) +
+  scale_color_manual(values = pal,
+                     name = "") +
+  geom_treescale() +
+  theme(legend.position = "none")
+
+```
+```{r HTR 1 tree2, Fig S8C}
+tree2 <- read.tree("./Data/OG0017996_tree.txt")
+d <- data.frame(label = tree2$tip.label)
+d$group <- c("FOSC", "FOSC","FOSC","Arabica", "Arabica", "Arabica", "FOSC","FOSC")
+ggtree(tree2)  %<+% d +
+  geom_tippoint(aes(color=group),size=5, na.rm = TRUE) +
+  scale_color_manual(values = pal,
+                     name = "") +
+  geom_treescale() +
+  theme(legend.position = "bottom")
+
+```

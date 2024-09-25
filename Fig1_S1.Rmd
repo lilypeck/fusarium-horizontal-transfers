@@ -1,0 +1,52 @@
+---
+title: "Species tree"
+author: "Lily Peck"
+date: "2024-09-20"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(ggtree)
+library(tidyverse)
+library(treeio)
+```
+
+
+```{r species tree, Fig 1}
+species.tree <- read.tree("./Data/Species_tree.treefile")
+
+groups<-read.csv("/Users/lilypeck/Library/CloudStorage/OneDrive-ImperialCollegeLondon/Genomics/7_flye.LR/densitree/species.tree.tip.labelgroup", sep="\t",header = 1)
+
+species.tree %>%
+  ggtree(color="#000000") %<+% groups +
+  geom_tiplab(aes(label=paste0('italic(', genus, ')~italic(', species, ')~', strain)), parse=T, size = 4, offset = .02, align = T) +
+  geom_nodelab(hjust = 1.5, size = 3) +
+  theme(legend.position = "bottom",
+        legend.text = element_text(size = 15),
+        panel.background = element_rect(fill='transparent'), #transparent panel bg
+        plot.background = element_rect(fill='transparent', color=NA)) +
+  geom_treescale(offset = -1) +
+  xlim(0,0.4)
+
+```
+
+
+```{r Fxyl zoom, Fig S1}
+drop <- c("Fsol_392280", "Fsol_352657" ,  "Fgram_PH1"  ,   "Fgram_11579" ,  "Foxy_244509"  , "Focu_race1" ,   "Fova_25433"  ,  "Foxy_292248"  ,
+          "Foraph_54005" , "Foraph_Tf1262", "Foxy_337541"   ,"Fopi_HDV247",   "Foxy_500221"  , "Foxy_141109"  , "Focu_b16"   ,   "Foly_MN25"  ,  
+          "Foxy_F047BC"  , "Foly_4287"  ,   "Focu_TR4"   ,   "Forapa_Tf1208", "Ffuj_LW94"  ,   "Ffuj_Y057" ,    "Fpro_02157"  ,  "Fpro_13237" ,  
+          "Fant_14957"  ,  "Fver_7600"  ,   "Fver_14953" ,   "Fudu_F02845" )
+tree_reduced <- drop.tip(species.tree,drop)
+
+tree_reduced %>%
+  ggtree(color="#000000") %<+% groups +
+  geom_tiplab(aes(label=paste0('italic(', genus, ')~italic(', species, ')~', strain)), parse=T, size = 4, align = F) +
+  geom_nodelab(hjust = 1.5, size = 3) +
+  xlim_tree(0.025) +
+  theme(legend.position = "bottom",
+        legend.text = element_text(size = 15),
+        panel.background = element_rect(fill='transparent'), #transparent panel bg
+        plot.background = element_rect(fill='transparent', color=NA)) +
+  geom_treescale(offset = -1)
+```
+

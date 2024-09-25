@@ -1,0 +1,378 @@
+---
+title: "Fig5"
+author: "Lily Peck"
+date: "2024-09-16"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(ggrepel)
+library(cowplot)
+```
+
+
+```{r arabica908 figure 5 and S9 figure}
+arabica908.DEseq <- read.delim("./data/salmon.isoform.counts.matrix.Fx908_coffee_vs_Fx908_culture.DESeq2.DE_results", header = T, sep = "\t")
+arabica908.DEseq <- tibble::rownames_to_column(arabica908.DEseq, "gene")
+# import coffee.up and remove genes not DE in both edgeR and DESeq2
+coffee.up.908 <- read.delim("./data/salmon.isoform.counts.matrix.Fx908_coffee_vs_Fx908_culture.DESeq2.DE_results.P0.001_C2.Fx908_coffee-UP.subset", header = T, sep = "\t")
+coffee.up.908 <- coffee.up.908 %>%
+  tibble::rownames_to_column("gene")
+coffee.up.908.edgeR <- read.delim("./data/salmon.isoform.counts.matrix.Fx908_coffee_vs_Fx908_culture.edgeR.DE_results.P0.001_C2.Fx908_coffee-UP.subset", header = T, sep = "\t")
+coffee.up.908.edgeR <- coffee.up.908.edgeR %>%
+  tibble::rownames_to_column("gene")
+coffee.up.908$temp <- coffee.up.908$gene %in% coffee.up.908.edgeR$gene
+coffee.up.908 <- coffee.up.908 %>%
+  filter(temp == T) %>%
+  dplyr::select(!temp)
+
+# import culture.up and remove genes not DE in both edgeR and DESeq2
+culture.up.908 <- read.delim("./data/salmon.isoform.counts.matrix.Fx908_coffee_vs_Fx908_culture.DESeq2.DE_results.P0.001_C2.Fx908_culture-UP.subset", header = T, sep = "\t")
+culture.up.908 <- culture.up.908 %>%
+  tibble::rownames_to_column("gene")
+culture.up.908.edgeR <- read.delim("./data/salmon.isoform.counts.matrix.Fx908_coffee_vs_Fx908_culture.edgeR.DE_results.P0.001_C2.Fx908_culture-UP.subset", header = T, sep = "\t")
+culture.up.908.edgeR <- culture.up.908.edgeR %>%
+  tibble::rownames_to_column("gene")
+culture.up.908$temp <- culture.up.908$gene %in% culture.up.908.edgeR$gene
+culture.up.908 <- culture.up.908 %>%
+  filter(temp == T) %>%
+  dplyr::select(!temp)                             
+                                  
+## cazys
+cazyfams.908 <- read.delim("./data/fxyl908.PLs.txt", header = F)
+cazyfams.908 <- cazyfams.908 %>%
+  rename(gene = V1, cazy = V2)
+arabica908.DEseq$cazy <- arabica908.DEseq$gene %in% cazyfams.908$gene
+
+# label genes as up, down, ns, effector
+arabica908.DEseq$coffee.up <- arabica908.DEseq$gene %in% coffee.up.908$gene
+arabica908.DEseq$culture.up <- arabica908.DEseq$gene %in% culture.up.908$gene
+coffee.ns.908 <- arabica908.DEseq %>% 
+  dplyr::select(gene, coffee.up, culture.up) %>%
+  mutate(type = case_when(coffee.up == "FALSE" & culture.up == "FALSE" ~ "ns")) %>%
+  filter(type == "ns") %>%
+  dplyr::select(gene)
+coffee.ns.908 <- coffee.ns.908$gene
+arabica908.DEseq$ns <- arabica908.DEseq$gene %in% coffee.ns.908
+
+arabica908.DEseq <- arabica908.DEseq %>%
+  dplyr::select(gene, log2FoldChange, padj, cazy, coffee.up, culture.up, ns) %>%
+  pivot_longer(cols = c("coffee.up", "culture.up", "ns"), names_to = "gene_type", values_to = "test") %>%
+  filter(test=="TRUE") %>%
+  dplyr::select(gene, log2FoldChange, padj, cazy, gene_type)
+
+six.908 <- arabica908.DEseq %>%
+  mutate(six = case_when(gene == "H9Q74_013635-T1" ~ "Six7", 
+                         gene == "H9Q74_012447-T1" ~ "Six10", 
+                         gene == "H9Q74_14902-T1" ~ "Six12"))
+
+coffee.up_genes.908.DEseq <- arabica908.DEseq %>%
+  filter(gene_type == "coffee.up") 
+
+culture.up_genes.908.DEseq <- arabica908.DEseq %>%
+  filter(gene_type == "culture.up")
+
+PLs <- arabica908.DEseq %>%
+  filter(cazy == "TRUE")
+
+# Add colour, size and alpha (transparency) to volcano plot --------------------
+cols<- c("coffee.up" = "#ffad73", "culture.up" = "#26b3ff", "ns" = "grey") 
+
+plot.908 <- arabica908.DEseq %>% 
+  ggplot(aes(x = log2FoldChange,
+             y = -log10(padj))) +
+  geom_point(aes(colour = gene_type), 
+             alpha = 0.5, 
+             shape = 16,
+             size = 3) + 
+  geom_point(data = PLs,
+             shape = 16,
+             size = 3,
+             alpha = 0.5,
+             fill = "orange4") +
+  geom_label_repel(data = six.908, # Add labels last to appear as the top layer
+                   aes(label = six),
+                   #colour = label.col,
+                   max.overlaps = Inf,
+                   nudge_y = 5,
+                   nudge_x = 5,
+                   size = 4,
+                   alpha = 1) +
+  theme_bw() +
+scale_colour_manual(labels = c("Inoculated up", "Inoculated down", "Not significant"),
+                    values = cols,
+                    name = "Expression\nchange") +
+  scale_x_continuous(breaks = c(seq(-20, 20, 5)),
+                     limits = c(-20, 20)) +
+  ylim(0,150) +
+  labs(x = "log2(fold change)",
+       y = "-log10(adjusted P-value)",
+       cols = "Expression \nchange",
+       title = "Arabica908") +
+  theme(legend.position = "right",
+        axis.text = element_text(size = 15),
+        axis.title = element_text(size = 15),
+        title = element_text(size = 15),
+        legend.text = element_text(size = 10),
+        legend.title = element_text(size = 10),
+        axis.title.y = element_blank())
+plot.908
+
+###### Fig S9
+# import effector gene list from Peck et al. 2021
+effectors.908 <- read.delim("./Data/fxyl908.putativeeffectors.txt", header = T)
+effectors.908 <- effectors.908 %>%
+  rename(gene = new.annot)
+arabica908.DEseq$effector <- arabica908.DEseq$gene %in% effectors.908$gene
+# include effector names and categories
+arabica908.DEseq <- arabica908.DEseq %>%
+  left_join(effectors.908, by = "gene")
+
+label.col <- c("OG0014398" = "purple","OG0013477" = "purple", 
+               "pelA" = "yellow4","FOXG_14254" = "yellow4", "pelD" = "yellow4", "OG0014367" = "blue",
+               "snf1" = "yellow4","sge1" = "yellow4", "fow1" = "yellow4", "catalase-peroxidase" = "yellow4",
+               "chlo_vacu" = "yellow4","OG0018569" = "blue","fmk1" = "yellow4", "rho1.2" = "yellow4",
+               "orx1" = "yellow4","OG0013871" = "yellow4","OG0013877" = "purple","rho1.1" = "yellow4")
+
+sig_DE_genes.908.DEseq <- arabica908.DEseq %>%
+  filter(effector == "TRUE")
+
+coffee.up_genes.908.DEseq <- sig_DE_genes.908.DEseq %>%
+  filter(gene_type == "coffee.up") 
+
+culture.up_genes.908.DEseq <- sig_DE_genes.908.DEseq %>%
+  filter(gene_type == "culture.up")
+
+Deseq.908.s9 <- arabica908.DEseq %>% 
+  ggplot(aes(x = log2FoldChange,
+             y = -log10(padj))) +
+  geom_point(aes(colour = gene_type), 
+             alpha = 0.5, 
+             shape = 16,
+             size = 3) + 
+  geom_point(data = coffee.up_genes.908.DEseq,
+             shape = 21,
+             size = 3,
+             alpha = 1,
+             fill = "firebrick",
+             colour = "black") +
+  geom_point(data = culture.up_genes.908.DEseq,
+             shape = 21,
+             size = 3,
+             alpha = 1,
+             fill = "steelblue",
+             colour = "black") +
+  theme_bw() +
+  geom_label_repel(data = sig_DE_genes.908.DEseq, # Add labels last to appear as the top layer
+                   aes(label = OG),
+                   colour = label.col,
+                   max.overlaps = Inf,
+                   nudge_y = 1,
+                   size = 5,
+                   alpha = 1) +
+  scale_colour_manual(labels = c("Inoculated up", "Inoculated down", "Not significant"),
+    values = cols,
+    name = "Expression\nchange") +
+  scale_x_continuous(breaks = c(seq(-20, 20, 5)),
+  limits = c(-20, 20)) +
+  ylim(0,50) +
+  labs(x = "log2(fold change)",
+       y = "-log10(adjusted P-value)",
+       cols = "Expression \nchange",
+       title = "Arabica908") +
+  theme(legend.position = "right",
+        axis.text = element_text(size = 15),
+        axis.title = element_text(size = 15),
+        title = element_text(size = 15),
+        legend.text = element_text(size = 10),
+        legend.title = element_text(size = 10),
+        axis.title.y = element_blank())
+Deseq.908.s9
+```
+
+```{r arabica563 figure 5 and S9 figure}
+arabica563.DEseq <- read.delim("./data/salmon.isoform.counts.matrix.Fx563_coffee_vs_Fx563_culture.DESeq2.DE_results", header = T, sep = "\t")
+arabica563.DEseq <- tibble::rownames_to_column(arabica563.DEseq, "gene")
+
+# import coffee.up and remove genes not DE in both edgeR and DESeq2
+coffee.up.563 <- read.delim("./data/salmon.isoform.counts.matrix.Fx563_coffee_vs_Fx563_culture.DESeq2.DE_results.P0.001_C2.Fx563_coffee-UP.subset", header = T, sep = "\t")
+coffee.up.563 <- coffee.up.563 %>%
+  tibble::rownames_to_column("gene")
+coffee.up.563.edgeR <- read.delim("./data/salmon.isoform.counts.matrix.Fx563_coffee_vs_Fx563_culture.edgeR.DE_results.P0.001_C2.Fx563_coffee-UP.subset", header = T, sep = "\t")
+coffee.up.563.edgeR <- coffee.up.563.edgeR %>%
+  tibble::rownames_to_column("gene")
+coffee.up.563$temp <- coffee.up.563$gene %in% coffee.up.563.edgeR$gene
+coffee.up.563 <- coffee.up.563 %>%
+  filter(temp == T) %>%
+  dplyr::select(!temp)
+
+# import culture.up and remove genes not DE in both edgeR and DESeq2
+culture.up.563 <- read.delim("./data/salmon.isoform.counts.matrix.Fx563_coffee_vs_Fx563_culture.DESeq2.DE_results.P0.001_C2.Fx563_culture-UP.subset", header = T, sep = "\t")
+culture.up.563 <- culture.up.563 %>%
+  tibble::rownames_to_column("gene")
+culture.up.563.edgeR <- read.delim("./data/salmon.isoform.counts.matrix.Fx563_coffee_vs_Fx563_culture.edgeR.DE_results.P0.001_C2.Fx563_culture-UP.subset", header = T, sep = "\t")
+culture.up.563.edgeR <- culture.up.563.edgeR %>%
+  tibble::rownames_to_column("gene")
+culture.up.563$temp <- culture.up.563$gene %in% culture.up.563.edgeR$gene
+culture.up.563 <- culture.up.563 %>%
+  filter(temp == T) %>%
+  dplyr::select(!temp)                             
+                                  
+## cazys
+cazyfams.563 <- read.delim("./data/fxyl563.PLs.txt", header = F)
+cazyfams.563 <- cazyfams.563 %>%
+  rename(gene = V1, cazy = V2)
+arabica563.DEseq$cazy <- arabica563.DEseq$gene %in% cazyfams.563$gene
+
+# label genes as up, down, ns, effector
+arabica563.DEseq$coffee.up <- arabica563.DEseq$gene %in% coffee.up.563$gene
+arabica563.DEseq$culture.up <- arabica563.DEseq$gene %in% culture.up.563$gene
+coffee.ns.563 <- arabica563.DEseq %>% 
+  dplyr::select(gene, coffee.up, culture.up) %>%
+  mutate(type = case_when(coffee.up == "FALSE" & culture.up == "FALSE" ~ "ns")) %>%
+  filter(type == "ns") %>%
+  dplyr::select(gene)
+coffee.ns.563 <- coffee.ns.563$gene
+arabica563.DEseq$ns <- arabica563.DEseq$gene %in% coffee.ns.563
+
+arabica563.DEseq <- arabica563.DEseq %>%
+  dplyr::select(gene, log2FoldChange, padj, cazy, coffee.up, culture.up, ns) %>%
+  pivot_longer(cols = c("coffee.up", "culture.up", "ns"), names_to = "gene_type", values_to = "test") %>%
+  filter(test=="TRUE") %>%
+  dplyr::select(gene, log2FoldChange, padj, cazy, gene_type)
+
+six.563 <- arabica563.DEseq %>%
+  mutate(six = case_when(gene == "V1217_016558-T1" ~ "Six7", 
+                         gene == "V1217_017194-T1" ~ "Six10", 
+                         gene == "V1217_017193-T1" ~ "Six12"))
+
+coffee.up_genes.563.DEseq <- arabica563.DEseq %>%
+  filter(gene_type == "coffee.up") 
+
+culture.up_genes.563.DEseq <- arabica563.DEseq %>%
+  filter(gene_type == "culture.up")
+
+PLs <- arabica563.DEseq %>%
+  filter(cazy == "TRUE")
+
+# Add colour, size and alpha (transparency) to volcano plot --------------------
+cols<- c("coffee.up" = "#ffad73", "culture.up" = "#26b3ff", "ns" = "grey") 
+
+plot.563 <- arabica563.DEseq %>% 
+  ggplot(aes(x = log2FoldChange,
+             y = -log10(padj))) +
+  geom_point(aes(colour = gene_type), 
+             alpha = 0.5, 
+             shape = 16,
+             size = 3) + 
+  geom_point(data = PLs,
+             shape = 16,
+             size = 3,
+             alpha = 0.5,
+             fill = "orange4") +
+  geom_label_repel(data = six.563, # Add labels last to appear as the top layer
+                   aes(label = six),
+                   #colour = label.col,
+                   max.overlaps = Inf,
+                   nudge_y = 5,
+                   nudge_x = 5,
+                   size = 4,
+                   alpha = 1) +
+  theme_bw() +
+scale_colour_manual(labels = c("Inoculated up", "Inoculated down", "Not significant"),
+                    values = cols,
+                    name = "Expression\nchange") +
+  scale_x_continuous(breaks = c(seq(-20, 20, 5)),
+                     limits = c(-20, 20)) +
+  ylim(0,150) +
+  labs(x = "log2(fold change)",
+       y = "-log10(adjusted P-value)",
+       cols = "Expression \nchange",
+       title = "Arabica563") +
+  theme(legend.position = "none",
+        axis.text = element_text(size = 15),
+        axis.title = element_text(size = 15),
+        title = element_text(size = 15),
+        legend.text = element_text(size = 10),
+        legend.title = element_text(size = 10),
+        axis.title.y = element_blank())
+plot.563
+
+###### Fig S9
+# import effector gene list from Peck et al. 2021
+effectors.563 <- read.delim("./Data/fxyl563.putativeeffectors.txt", header = T)
+effectors.563 <- effectors.563 %>%
+  rename(gene = new.gene.annot)
+arabica563.DEseq$effector <- arabica563.DEseq$gene %in% effectors.563$gene
+# include effector names and categories
+arabica563.DEseq <- arabica563.DEseq %>%
+  left_join(effectors.563, by = "gene")
+
+label.col <- c("OG0014398" = "purple","FOXG_14254" = "yellow4", 
+               "pelA" = "yellow4","pelD" = "yellow4", "orx1" = "yellow4", "OG0018569" = "blue",
+               "OG0014367" = "blue","sge1" = "yellow4", "catalase-peroxidase" = "yellow4", "fow1" = "yellow4", 
+               "snf1" = "yellow4","chlo_vacu" = "yellow4","OG0014828" = "purple","OG0013912" = "blue", 
+               "rho1.1" = "yellow4", "OG0013871" = "purple","rho1.2" = "yellow4", "OG0013877" = "purple",
+               "fmk1" = "yellow4","OG0013477"  = "purple")
+
+sig_DE_genes.563.DEseq <- arabica563.DEseq %>%
+  filter(effector == "TRUE")
+
+coffee.up_genes.563.DEseq <- sig_DE_genes.563.DEseq %>%
+  filter(gene_type == "coffee.up") 
+
+culture.up_genes.563.DEseq <- sig_DE_genes.563.DEseq %>%
+  filter(gene_type == "culture.up")
+
+Deseq.563.s9 <- arabica563.DEseq %>% 
+  ggplot(aes(x = log2FoldChange,
+             y = -log10(padj))) +
+  geom_point(aes(colour = gene_type), 
+             alpha = 0.5, 
+             shape = 16,
+             size = 3) + 
+  geom_point(data = coffee.up_genes.563.DEseq,
+             shape = 21,
+             size = 3,
+             alpha = 1,
+             fill = "firebrick",
+             colour = "black") +
+  geom_point(data = culture.up_genes.563.DEseq,
+             shape = 21,
+             size = 3,
+             alpha = 1,
+             fill = "steelblue",
+             colour = "black") +
+  theme_bw() +
+  geom_label_repel(data = sig_DE_genes.563.DEseq, # Add labels last to appear as the top layer
+                   aes(label = OG),
+                   colour = label.col,
+                   max.overlaps = Inf,
+                   nudge_y = 1,
+                   size = 5,
+                   alpha = 1) +
+  scale_colour_manual(labels = c("Inoculated up", "Inoculated down", "Not significant"),
+    values = cols,
+    name = "Expression\nchange") +
+  scale_x_continuous(breaks = c(seq(-20, 20, 5)),
+  limits = c(-20, 20)) +
+  ylim(0,50) +
+  labs(x = "log2(fold change)",
+       y = "-log10(adjusted P-value)",
+       cols = "Expression \nchange",
+       title = "Arabica563") +
+  theme(legend.position = "right",
+        axis.text = element_text(size = 15),
+        axis.title = element_text(size = 15),
+        title = element_text(size = 15),
+        legend.text = element_text(size = 10),
+        legend.title = element_text(size = 10),
+        axis.title.y = element_blank())
+Deseq.563.s9
+```
+
+```{r both plots in figure 5}
+both <- plot_grid(plot.563, plot.908, rel_widths = c(0.64, 1))
+both
+```

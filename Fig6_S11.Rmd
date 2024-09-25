@@ -1,0 +1,109 @@
+---
+title: "Mimps"
+author: "Lily Peck"
+date: "2024-09-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(ggtree)
+library(tidyverse)
+require(pals)
+library(aplot)
+```
+
+```{r read in files and format them}
+
+species.tree <- read.tree("./Data/Speciestree.treefile")
+mimps<-read.csv("./Data/mimps.csv", sep=",",header = 1)
+groups<-read.table("./Data/species.tree.tip.labelgroup.txt", sep="\t",header = 1)
+mimp1.tree<-read.tree("/Users/lilypeck/Library/CloudStorage/OneDrive-ImperialCollegeLondon/Program_files/Linux/iqtree-2.3.5-macOS-arm/mimp1.allseqs_NT.fna.contree")
+
+impala <- mimps %>%
+  select(Strain,impalaORF)
+mimps <- mimps %>%
+  select(Strain:mn2) %>%
+  pivot_longer(cols = -Strain, names_to = "type", values_to = "count")
+#rn<-mimps$Strain
+#rownames(mimps)<-rn
+```
+
+
+```{r species tree and mimp number plot in Fig 6A}
+
+tree.plot <- species.tree %>%
+  ggtree() %<+% impala %<+% groups +
+  geom_tippoint(aes(x = x+.05, color=impalaORF),size=4) +
+  scale_color_manual(values = c("orange","blue"),
+                     labels = c("Absent", "Intact"),
+                     #breaks = c("Full", "Interrupted","Absent"),
+                     name = "Impala ORF") +
+  geom_treescale(offset = -1) +
+  geom_tiplab(aes(label=paste0('italic(', genus, ')~italic(', species, ')~', strain)), parse=T, size = 3, offset = .1, align = T) +
+  theme(legend.text = element_text(size=10),
+        legend.title = element_text(size = 10))+
+  xlim(0, 1)
+tree.plot
+
+mimps.plot <- mimps %>%
+  ggplot(aes(Strain, count)) + 
+  geom_col(aes(fill=type)) + 
+  # geom_text(aes(label=Strain, y= count+.1)) +
+  coord_flip() + 
+  theme_tree2() + 
+  scale_fill_manual(values=as.vector(alphabet(9)),
+                    name = "Mimp family") +
+  theme(legend.position='right',
+        axis.text=element_text(size=10),
+        legend.text = element_text(size = 10),
+        legend.title = element_text(size = 10),
+        axis.title = element_text(size = 10)) +
+  ylab("Count of miniature impala element by family")
+
+mimps.plot %>% insert_left(tree.plot)
+#ggsave("Fig6_speciestree_mimps.svg")
+```
+
+```{r mimp1 tree in Fig 6B and S11}
+## first format files
+df2 = as_tibble(mimp1.tree$tip.label)
+df <- df2 %>% 
+  mutate(new.label = value,
+         new.label = gsub("^([^_]*_[^_]*).*", "\\1", new.label),
+         new.label = gsub("Foxy_GCF000149955", "Foly_4287", new.label))
+mimp1.tree$tip.label <- sub("^([^_]*_[^_]*).*", "\\1", mimp1.tree$tip.label)
+mimp1.tree$tip.label <- gsub("Foxy_GCF000149955", "Foly_4287", mimp1.tree$tip.label)
+## join to species / pop id file
+groups <- groups %>%
+  rename(new.label = species.tree.tip.label)
+groups <- groups %>% 
+  left_join(df, groups, by = "new.label") %>%
+  na.omit()
+## now plot tree (Fig 6B)
+pal <- c("#74A089", "#F5CDB4", "#F8AFA8", "#9C964A", "#F98400")
+## daylight unrooted tree
+mimp1.tree %>%
+  ggtree(layout = "daylight", aes(color=group), size=1, alpha = 0.5) %<+% groups +
+  #geom_treescale() + #tree scale added
+  geom_tippoint(aes(color=group),size=6, na.rm = TRUE, alpha = .7) +
+  scale_color_manual(values = pal,
+                     # labels = c("Absent", "Intact"),
+                     breaks = c("Robusta", "Coffea1","Coffea2","Arabica","FOSC"),
+                     name = "") +
+  theme(legend.position = "bottom")
+#ggsave("Mimp1Tree_daylight.svg")
+
+## regular tree with branch bootstraps (Fig S11)
+mimp1.tree %>%
+  ggtree(color="#000000", aes(color=group), alpha = 1) %<+% groups +
+  geom_treescale() + #tree scale added
+  geom_nodelab(hjust=1.5, size = 3, color = "black") +
+  geom_tippoint(aes(x = x+.01, color=group), alpha=0.6,size=3, na.rm = TRUE) +
+  scale_color_manual(values = pal,
+                     # labels = c("Absent", "Intact"),
+                     breaks = c("Robusta", "Coffea1","Coffea2","Arabica","FOSC"),
+                     name = "") +
+  theme(legend.position = "bottom",
+        legend.text = element_text(size = 10))
+#ggsave("Mimp1tree.svg")
+```

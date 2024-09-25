@@ -1,0 +1,44 @@
+species.tree.tip.label	group	genus	species	strain
+Fsol_352657	NA	F.	solani	657
+Fsol_392280	NA	F.	solani	280
+Fgram_PH1	NA	F.	graminearum	PH1
+Fgram_11579	NA	F.	graminearum	579
+Ffuj_Y057	FFC	F.	fujikuroi	Y057
+Ffuj_LW94	FFC	F.	fujikuroi	LW94
+Fpro_02157	FFC	F.	proliferatum	157
+Fpro_13237	FFC	F.	proliferatum	237
+Fant_14957	FFC	F.	anthophylum	214
+Fver_7600	FFC	F.	verticillioides	600
+Fver_14953	FFC	F.	verticillioides	953
+Fudu_F02845	FFC	F.	udum	845
+Fphy_13617	FFC	F.	phyllophylum	617
+Fxyl_507035	Coffea2	Fx		coffea035
+Fxyl_392674	Coffea2	Fx		coffea674
+Fxyl_507113	Coffea2	Fx		coffea113
+Fxyl_L0394	Robusta	Fx		robustaL0394
+Fxyl_392277	Robusta	Fx		robusta277
+Fxyl_392254	Robusta	Fx		robusta254
+Fxyl_379925	Robusta	Fx		robusta925
+Fxyl_392268	Robusta	Fx		robusta268
+Fxyl_392676	Coffea1	Fx		coffea676
+Fxyl_127659	Coffea1	Fx		coffea659
+Fxyl_507038	Arabica	Fx		arabica038
+Fxyl_389563	Arabica	Fx		arabica563
+Fxyl_375908	Arabica	Fx		arabica908
+Fxyl_LR_389563	Arabica	Fx		arabica563(R)
+Forapa_Tf1208	FOSC	Fo	rapae	Tf1208
+Focu_TR4	FOSC	Fo	cubense	TR4
+Foxy_F047BC	FOSC	Fo		47
+Foly_MN25	FOSC	Fo	lycopersici	MN25
+Foly_4287	FOSC	Fo	lycopersici	4287
+Foxy_141109	FOSC	Fo	cubense	109
+Focu_b16	FOSC	Fo	cubense	b16
+Fova_25433	FOSC	Fo	vasinfectum	25433
+Focu_race1	FOSC	Fo	cubense	race1
+Foxy_244509	FOSC	Fo	coffea	509
+Foxy_292248	FOSC	Fo	vasinfectum	248
+Foxy_337541	FOSC	Fo	raphani	541
+Foraph_54005	FOSC	Fo	raphani	54005
+Foraph_Tf1262	FOSC	Fo	raphani	Tf1262
+Fopi_HDV247	FOSC	Fo	pisi	HDV247
+Foxy_500221	FOSC	Fo	pisi	221
