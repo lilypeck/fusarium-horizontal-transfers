@@ -13,7 +13,7 @@ library(aplot)
 ```
 
 ```{r read in files and format them}
-
+### first run Fig6_findTEs.sh to identify TEs in genomes
 species.tree <- read.tree("./Data/Speciestree.treefile")
 mimps<-read.csv("./Data/mimps.csv", sep=",",header = 1)
 groups<-read.table("./Data/species.tree.tip.labelgroup.txt", sep="\t",header = 1)
