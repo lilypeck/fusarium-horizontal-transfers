@@ -2,7 +2,7 @@
 
 Scripts for analysis of genomics, transcriptomics, population genetics, and horizontal transfers across multiple _Fusarium_ species (_F. xylarioides, F. oxysporum, and F. solani_).
 
-A repository for all custom analysis and plotting scripts for the manuscript 'Horizontal transfers between fungal _Fusarium_ species contributed to successive outbreaks of coffee wilt disease' (Peck et al. 2024).
+A repository for all custom analysis and plotting scripts for the manuscript 'Horizontal transfers between fungal _Fusarium_ species contributed to successive outbreaks of coffee wilt disease' (Peck et al. 2024; https://doi.org/10.1101/2023.12.22.572981).
 
 <img width="733" alt="YellowLeaf" src="https://github.com/user-attachments/assets/167228ae-6702-4e69-9791-0ecea872ab4a">
 
