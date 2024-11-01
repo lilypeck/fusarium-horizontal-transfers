@@ -243,9 +243,9 @@ arabica563.DEseq <- arabica563.DEseq %>%
   dplyr::select(gene, log2FoldChange, padj, cazy, gene_type)
 
 six.563 <- arabica563.DEseq %>%
-  mutate(six = case_when(gene == "V1217_016558-T1" ~ "Six7", 
-                         gene == "V1217_017194-T1" ~ "Six10", 
-                         gene == "V1217_017193-T1" ~ "Six12"))
+  mutate(six = case_when(gene == "H9Q71_0016558-T1" ~ "Six7", 
+                         gene == "H9Q71_0017194-T1" ~ "Six10", 
+                         gene == "H9Q71_0017193-T1" ~ "Six12"))
 
 coffee.up_genes.563.DEseq <- arabica563.DEseq %>%
   filter(gene_type == "coffee.up") 
